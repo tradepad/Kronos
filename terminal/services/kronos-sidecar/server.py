@@ -138,7 +138,7 @@ class Candle(BaseModel):
 class PredictRequest(BaseModel):
     candles: List[Candle]
     variant: Variant = "base"
-    horizon_minutes: int = Field(5, ge=1, le=240)
+    horizon_minutes: int = Field(5, ge=1, le=1440)
     temperature: float = 1.0
     top_p: float = 0.9
     sample_count: int = Field(20, ge=1, le=200)

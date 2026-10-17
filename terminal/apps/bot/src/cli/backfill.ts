@@ -3,6 +3,11 @@
  * walk-forward backtests at random start offsets over the same candles.
  *
  *   pnpm backfill --predictor kronos --model base --samples 3 --days 35 --runs 500 --windows 25
+ *   pnpm backfill --markets btc-updown-4h,btc-updown-1d --runs 100 --windows 25   # longer horizons
+ *
+ * Without --days, 5m/15m markets use 35 days; longer candles fetch enough
+ * history for the model's context plus ~2,000 test windows (capped by what
+ * the exchange has).
  *
  * Runs overlap, so they are NOT independent samples: treat cross-run spread
  * as a stability check, not a confidence interval.
@@ -20,7 +25,8 @@ if (typeof args.samples !== "string") cfg.sampleCount = 3;
 if (typeof args["min-confidence"] !== "string") cfg.minConfidence = 0.55;
 if (typeof args["min-edge"] !== "string") cfg.minEdge = 0.02;
 
-const days = num(args, "days", 35);
+const daysArg = typeof args.days === "string" ? num(args, "days", 35) : null;
+const TEST_CANDLES = 2000;
 const runsPerMarket = num(args, "runs", 500);
 const windows = num(args, "windows", 25);
 const ids = str(args, "markets", "");
@@ -33,6 +39,7 @@ async function main() {
   for (const market of markets) {
     if (!market) throw new Error(`Unknown market in --markets "${ids}"`);
     const candlesPerDay = (24 * 60) / Number(market.bybitInterval);
+    const days = daysArg ?? Math.max(35, Math.ceil((lookback(cfg) + TEST_CANDLES) / candlesPerDay));
     log(`${market.id}: fetching ${days} days (${Math.ceil(days * candlesPerDay)} candles)…`);
     const { candles, source } = await fetchCandles(cfg, {
       symbol: market.bybitSymbol,

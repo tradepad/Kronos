@@ -21,6 +21,19 @@ export interface CandleResult {
 
 const UA = { "user-agent": "kronos-research-terminal/0.1" };
 
+/** Interval codes per exchange. Internally an interval is always minutes as a string. */
+export function bybitIntervalCode(minutes: number): string {
+  if (minutes === 1440) return "D";
+  if (minutes === 10080) return "W";
+  return String(minutes);
+}
+export function binanceIntervalCode(minutes: number): string {
+  if (minutes % 1440 === 0) return `${minutes / 1440}d`;
+  if (minutes % 60 === 0) return `${minutes / 60}h`;
+  return `${minutes}m`;
+}
+const COINBASE_GRANULARITIES = [1, 5, 15, 60, 360, 1440];
+
 function want(cfg: Config, opts: FetchOpts): number {
   if (opts.limit !== undefined) return opts.limit;
   return lookback(cfg) + cfg.atrPeriod + 10 + (opts.extraCandles ?? 0);
@@ -52,7 +65,12 @@ export async function fetchBybitCandles(cfg: Config, opts: FetchOpts = {}): Prom
 
   while (all.length < limit) {
     const batch = Math.min(200, limit - all.length);
-    const params = new URLSearchParams({ category: "linear", symbol, interval, limit: String(batch) });
+    const params = new URLSearchParams({
+      category: "linear",
+      symbol,
+      interval: bybitIntervalCode(Number(interval)),
+      limit: String(batch),
+    });
     if (endTime !== undefined) params.set("end", String(endTime));
 
     const resp = await fetch(`${cfg.bybitUrl}?${params}`, { signal: opts.signal, headers: UA });
@@ -88,7 +106,7 @@ export async function fetchBinanceCandles(cfg: Config, opts: FetchOpts = {}): Pr
   let endTime: number | undefined = opts.endTime?.getTime();
   while (all.length < limit) {
     const batch = Math.min(1000, limit - all.length);
-    const params = new URLSearchParams({ symbol, interval: `${interval}m`, limit: String(batch) });
+    const params = new URLSearchParams({ symbol, interval: binanceIntervalCode(Number(interval)), limit: String(batch) });
     if (endTime !== undefined) params.set("endTime", String(endTime));
     const resp = await fetch(`https://api.binance.com/api/v3/klines?${params}`, { signal: opts.signal, headers: UA });
     if (!resp.ok) throw new Error(`Binance HTTP ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
@@ -114,6 +132,7 @@ export async function fetchBinanceCandles(cfg: Config, opts: FetchOpts = {}): Pr
 export async function fetchCoinbaseCandles(cfg: Config, opts: FetchOpts = {}): Promise<Candle[]> {
   const symbol = opts.symbol ?? cfg.symbol;
   const interval = Number(opts.interval ?? cfg.interval);
+  if (!COINBASE_GRANULARITIES.includes(interval)) throw new Error(`Coinbase has no ${interval}-minute candles`);
   const product = symbol.replace(/USDT?$/, "") + "-USD";
   const limit = want(cfg, opts) + 1;
   const stepMs = interval * 60_000;
