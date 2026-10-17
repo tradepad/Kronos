@@ -9,3 +9,6 @@ services/kronos-sidecar/.venv/
 __pycache__/
 *.tsbuildinfo
 next-env.d.ts
+
+# The repo root .gitignore ignores every lib/ (Python template); the web app needs its own.
+!apps/web/src/lib/
