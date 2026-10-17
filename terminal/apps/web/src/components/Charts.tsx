@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LiveSignal, ReliabilityBin } from "@/lib/types";
-import { clock, niceTicks, pct, price } from "./format";
+import { clock, DOWN, niceTicks, pct, price, UP } from "./format";
 
 function useWidth<T extends HTMLElement>(fallback = 600) {
   const ref = useRef<T>(null);
@@ -63,6 +63,8 @@ export function ForecastChart({ signal, height = 260 }: { signal: LiveSignal | n
   const projX1 = projX0 + g.projW - 12;
   const projMid = (projX0 + projX1) / 2;
   const mean = signal.prediction?.predictedCloseAvg ?? null;
+  // Forecast bands take the colour of the call: green when the average path ends higher.
+  const bandCol = mean !== null && cur !== null && mean < cur ? DOWN : UP;
 
   return (
     <div ref={ref} style={{ width: "100%" }}>
@@ -91,7 +93,7 @@ export function ForecastChart({ signal, height = 260 }: { signal: LiveSignal | n
         {candles.map((c, i) => {
           const [t, o, hh, l, cl] = c;
           const up = cl >= o;
-          const col = up ? "#ff563c" : "#86aec6";
+          const col = up ? UP : DOWN;
           const bw = Math.max(1.5, g.cw * 0.62);
           return (
             <g key={t}>
@@ -133,7 +135,7 @@ export function ForecastChart({ signal, height = 260 }: { signal: LiveSignal | n
               y={g.sy(g.q(0.9))}
               width={projX1 - projX0}
               height={Math.max(1, g.sy(g.q(0.1)) - g.sy(g.q(0.9)))}
-              fill="#ec3013"
+              fill={bandCol}
               opacity={0.12}
             />
             <rect
@@ -141,7 +143,7 @@ export function ForecastChart({ signal, height = 260 }: { signal: LiveSignal | n
               y={g.sy(g.q(0.75))}
               width={(projX1 - projX0) * 0.6}
               height={Math.max(1, g.sy(g.q(0.25)) - g.sy(g.q(0.75)))}
-              fill="#ec3013"
+              fill={bandCol}
               opacity={0.28}
             />
             {preds.map((p, i) => (
@@ -151,7 +153,7 @@ export function ForecastChart({ signal, height = 260 }: { signal: LiveSignal | n
                 x2={projX1 - 3}
                 y1={g.sy(p)}
                 y2={g.sy(p)}
-                stroke={cur !== null && p >= cur ? "#ff563c" : "#86aec6"}
+                stroke={cur !== null && p >= cur ? UP : DOWN}
                 strokeWidth={1}
                 opacity={0.55}
               />

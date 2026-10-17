@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import type { BacktestPayload, LiveSignal, RuntimeConfig, TradeRow } from "@/lib/types";
 import { Reliability } from "./Charts";
 import { EquityCurve } from "./EquityCurve";
-import { clock, fixed, pct, pp, signClass, usd, usdSigned } from "./format";
+import { aboveClass, clock, fixed, pct, pp, signClass, usd, usdSigned } from "./format";
 
 /* ── Model vote: the Monte Carlo split for the selected market ───────── */
 export function VotePanel({ signal }: { signal: LiveSignal | null }) {
@@ -53,7 +53,7 @@ export function VotePanel({ signal }: { signal: LiveSignal | null }) {
           {ind.votes.map((v) => (
             <span
               key={v.name}
-              className={`tag ${v.vote === null ? "neutral" : v.vote === "UP" ? "" : "cold"}`}
+              className={`tag ${v.vote === null ? "neutral" : v.vote === "UP" ? "warm" : "cold"}`}
               title={v.value === null ? "inactive" : `value ${v.value.toFixed(4)}`}
             >
               {v.name} {v.vote === null ? "·" : v.vote === "UP" ? "▲" : "▼"}
@@ -97,7 +97,7 @@ export function CalibrationPanel({ backtest }: { backtest: BacktestPayload | nul
           <div className="strip" style={{ gridTemplateColumns: "repeat(3, minmax(0,1fr))" }}>
             <div style={{ padding: "10px 16px" }}>
               <div className="label">Brier</div>
-              <div className={`v live-num ${cal.brier !== null && cal.brier > 0.25 ? "down" : ""}`} style={{ fontSize: 17 }}>
+              <div className={`v live-num ${cal.brier === null ? "" : aboveClass(0.25, cal.brier)}`} style={{ fontSize: 17 }}>
                 {fixed(cal.brier, 3)}
               </div>
             </div>
@@ -445,7 +445,7 @@ export function SettingsDrawer({ config, onClose, onSaved }: { config: RuntimeCo
         <span className="label" style={{ color: "var(--color-neutral-200)" }}>
           {label}
         </span>
-        <span className="num up">{fmt(draft[k])}</span>
+        <span className="num" style={{ color: "var(--color-accent-500)" }}>{fmt(draft[k])}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={draft[k]} onChange={(e) => set(k, Number(e.target.value))} />
       <span className="field-hint">{hint}</span>

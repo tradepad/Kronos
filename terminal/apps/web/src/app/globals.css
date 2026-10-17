@@ -23,12 +23,12 @@
   --color-neutral-900: #1d1b1b;
   --color-ground: #121010;
 
-  /* Up / profit runs warm (the accent); down / loss runs cold. Glyphs (▲ ▼ + −)
-     always accompany the colour so it is never the only cue. */
-  --up: var(--color-accent-500);
-  --up-dim: var(--color-accent-700);
-  --down: #86aec6;
-  --down-dim: #3d5566;
+  /* Gains and UP calls are green; losses and DOWN calls take the red accent.
+     Glyphs (▲ ▼ + −) always accompany the colour so it is never the only cue. */
+  --up: #2ee59d;
+  --up-dim: #0e6b47;
+  --down: var(--color-accent-500);
+  --down-dim: var(--color-accent-800);
 
   --font-heading: "Archivo", system-ui, sans-serif;
   --font-body: "Archivo", system-ui, sans-serif;
@@ -137,6 +137,7 @@ button { font: inherit; color: inherit; }
 .tag.solid { background: var(--color-accent); color: var(--color-ground); }
 .tag.neutral { border-color: var(--color-neutral-700); color: var(--color-neutral-400); }
 .tag.cold { border-color: var(--down-dim); color: var(--down); }
+.tag.warm { border-color: var(--up-dim); color: var(--up); }
 .tag.warn { border-color: #b8860b; color: #f0c05a; }
 
 .empty { padding: var(--space-6) var(--space-4); font-size: 12px; color: var(--color-neutral-500); line-height: 1.6; }
@@ -188,6 +189,7 @@ button { font: inherit; color: inherit; }
   border: 2px solid var(--color-accent-700); color: var(--color-accent-500);
 }
 .mkt-code.cold { border-color: var(--down-dim); color: var(--down); }
+.mkt-code.warm { border-color: var(--up-dim); color: var(--up); }
 .mkt-title { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mkt-meta { font-size: 11px; color: var(--color-neutral-500); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mkt-ring { width: 14px; height: 14px; border: 2px solid var(--color-neutral-600); }
@@ -216,14 +218,15 @@ button { font: inherit; color: inherit; }
 .tape-kind { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; padding-top: 1px; color: var(--color-accent-500); }
 .tape-kind.skip { color: var(--color-neutral-500); }
 .tape-kind.error { color: #f0c05a; }
-.tape-kind.resolve { color: var(--down); }
+.tape-kind.resolve { color: var(--color-neutral-400); }
 .tape-text { color: var(--color-neutral-300); line-height: 1.4; }
 .tape-time { font-family: var(--font-mono); font-size: 10px; color: var(--color-neutral-600); }
 
 /* ── Hero / equity ─────────────────────────────────────────────────── */
 .hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4) var(--space-6); padding: var(--space-6) var(--space-6) var(--space-2); }
 .hero-num { font-family: var(--font-heading); font-weight: 800; font-size: clamp(44px, 4.6vw, 76px); line-height: 0.9; white-space: nowrap; letter-spacing: 0.01em; }
-.hero-num.up { text-shadow: 0 0 32px color-mix(in srgb, var(--color-accent) 40%, transparent); }
+.hero-num.up { text-shadow: 0 0 32px color-mix(in srgb, var(--up) 35%, transparent); }
+.hero-num.down { text-shadow: 0 0 32px color-mix(in srgb, var(--color-accent) 40%, transparent); }
 .hero-side { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; white-space: nowrap; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .chart-wrap { padding: var(--space-4) var(--space-6) 0 var(--space-4); }

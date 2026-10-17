@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import type { LiveSignal } from "@/lib/types";
 import { ForecastChart } from "./Charts";
 import { EquityCurve } from "./EquityCurve";
-import { ago, clock, fixed, hhmmss, pct, pp, price, signClass, usd, usdSigned } from "./format";
+import { aboveClass, ago, clock, fixed, hhmmss, pct, pp, price, signClass, usd, usdSigned } from "./format";
 import { CalibrationPanel, GatePanel, Lifetime, RunsTable, SettingsDrawer, StrategyPanel, TradesTable, VotePanel } from "./Panels";
 import { useNow, useStream } from "./useStream";
 
@@ -19,6 +19,7 @@ export function Desk() {
 
   const source = s.summary?.source ?? s.status?.config.backtestSource ?? "worker";
   const bt = s.summary?.backtest;
+  const brierNow = s.backtest?.calibration.brier ?? bt?.avgBrier ?? null;
   const paper = s.summary?.paper;
   const bot = s.status?.bot;
   const sidecar = bot?.sidecar;
@@ -68,9 +69,9 @@ export function Desk() {
         </div>
         <Kpi label="PAPER BANKROLL" value={usd(paper?.bankroll)} sub={`${usdSigned(paper?.realizedPnl)} REALISED · ${paper?.openCount ?? 0} OPEN`} tone={signClass(paper?.realizedPnl)} />
         <Kpi label={`BACKTEST PNL · ${source.toUpperCase()}`} value={usdSigned(totalPnl)} sub={`${bt?.runs ?? 0} RUNS · SIM ODDS`} tone={signClass(totalPnl)} />
-        <Kpi label="GATED WIN RATE" value={bt && bt.betsPlaced ? pct(bt.winRate, 1) : "—"} sub={`${bt?.betsPlaced ?? 0} BETS · ROI ${pct(bt?.roi ?? null, 1)}`} />
+        <Kpi label="GATED WIN RATE" value={bt && bt.betsPlaced ? pct(bt.winRate, 1) : "—"} sub={`${bt?.betsPlaced ?? 0} BETS · ROI ${pct(bt?.roi ?? null, 1)}`} tone={bt && bt.betsPlaced ? aboveClass(bt.winRate, 0.5) : ""} />
         <Kpi label="RAW ACCURACY" value={bt && bt.rawPredictions ? pct(bt.rawAccuracy, 1) : "—"} sub={`${(bt?.rawPredictions ?? 0).toLocaleString()} CALLS · UNGATED`} tone={bt && bt.rawPredictions ? (bt.rawAccuracy >= 0.5 ? "up" : "down") : ""} />
-        <Kpi label="BRIER · LOG LOSS" value={fixed(s.backtest?.calibration.brier ?? bt?.avgBrier ?? null, 3)} sub={`LOG ${fixed(s.backtest?.calibration.logLoss ?? bt?.avgLogLoss ?? null, 3)} · COIN 0.250`} />
+        <Kpi label="BRIER · LOG LOSS" value={fixed(brierNow, 3)} sub={`LOG ${fixed(s.backtest?.calibration.logLoss ?? bt?.avgLogLoss ?? null, 3)} · COIN 0.250`} tone={brierNow === null ? "" : aboveClass(0.25, brierNow)} />
         <Kpi label="MODEL" value={modelLabel.toUpperCase()} sub={modelSub} small />
       </section>
 
@@ -187,7 +188,7 @@ export function Desk() {
                 <span className="label">{(bt?.rawPredictions ?? 0).toLocaleString()} UNGATED CALLS</span>
               </div>
               <div className="meter-track">
-                <div className="fill" style={{ width: `${(bt?.rawAccuracy ?? 0) * 100}%` }} />
+                <div className="fill" style={{ width: `${(bt?.rawAccuracy ?? 0) * 100}%`, background: bt && bt.rawPredictions && bt.rawAccuracy < 0.5 ? "var(--down)" : "var(--up)" }} />
                 <div className="mark" style={{ left: "50%" }} title="50% = coin flip" />
               </div>
             </div>
@@ -285,7 +286,7 @@ function MarketRow({ sig, active, onPick, now }: { sig: LiveSignal; active: bool
   return (
     <>
       <button className="mkt" aria-pressed={active} onClick={onPick} title={sig.slug}>
-        <div className={`mkt-code${dir === "DOWN" ? " cold" : ""}`}>{code}</div>
+        <div className={`mkt-code${dir === "DOWN" ? " cold" : dir === "UP" ? " warm" : ""}`}>{code}</div>
         <div style={{ minWidth: 0 }}>
           <div className="mkt-title">
             {sig.short}{" "}
@@ -359,7 +360,7 @@ function WindowClock({ signal, now, paperOpen, odds }: { signal: LiveSignal | nu
         </div>
         <div>
           <div className="label">Odds tape</div>
-          <div className="v live-num up">{odds.toLocaleString()}</div>
+          <div className="v live-num">{odds.toLocaleString()}</div>
         </div>
       </div>
     </div>

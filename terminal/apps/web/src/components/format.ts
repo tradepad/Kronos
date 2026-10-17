@@ -19,6 +19,10 @@ export const price = (x: number | null | undefined): string => {
   if (x === null || x === undefined || !Number.isFinite(x)) return "—";
   return x >= 1000 ? x.toLocaleString("en-US", { maximumFractionDigits: 1 }) : x.toFixed(x >= 10 ? 2 : 4);
 };
+/** Gain / loss colours for SVG, where CSS classes don't reach. Keep in step with --up / --down. */
+export const UP = "#2ee59d";
+export const DOWN = "#ff563c";
+
 export const signClass = (x: number | null | undefined) => (x === null || x === undefined || x === 0 ? "" : x > 0 ? "up" : "down");
 export const hhmmss = (ms: number): string => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -57,3 +61,7 @@ export const compact = (x: number): string => {
   if (a >= 1e3) return `${(x / 1e3).toFixed(a >= 1e4 ? 0 : 1)}K`;
   return a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : x.toFixed(2);
 };
+
+/** Above / below a threshold (accuracy vs 50%), coloured like a gain or loss. */
+export const aboveClass = (x: number | null | undefined, line: number) =>
+  x === null || x === undefined || !Number.isFinite(x) || x === line ? "" : x > line ? "up" : "down";

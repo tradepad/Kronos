@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { EquityPoint } from "@/lib/types";
-import { clock, compact, niceTicks, usd, usdSigned } from "./format";
+import { clock, compact, DOWN, niceTicks, UP, usd, usdSigned } from "./format";
 import { useReducedMotion } from "./useStream";
 
 interface Props {
@@ -127,6 +127,7 @@ export function EquityCurve({
   const last = shown[shown.length - 1];
   const lastVal = last ? val(last) : base;
   const isUp = lastVal >= base;
+  const baseFrac = height > 0 ? Math.min(1, Math.max(0, g.sy(base) / height)) : 0.5;
   const xTicks = useMemo(() => {
     if (shown.length < 2) return [] as number[];
     const n = compactAxes ? 2 : Math.max(2, Math.min(6, Math.floor(g.w / 140)));
@@ -168,12 +169,17 @@ export function EquityCurve({
       >
         <defs>
           <linearGradient id={`gu${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#ec3013" stopOpacity="0.5" />
-            <stop offset="1" stopColor="#ec3013" stopOpacity="0" />
+            <stop offset="0" stopColor={UP} stopOpacity="0.4" />
+            <stop offset="1" stopColor={UP} stopOpacity="0" />
           </linearGradient>
           <linearGradient id={`gd${uid}`} x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0" stopColor="#86aec6" stopOpacity="0.4" />
-            <stop offset="1" stopColor="#86aec6" stopOpacity="0" />
+            <stop offset="0" stopColor={DOWN} stopOpacity="0.45" />
+            <stop offset="1" stopColor={DOWN} stopOpacity="0" />
+          </linearGradient>
+          {/* The line itself: green above the break-even line, red below it. */}
+          <linearGradient id={`gs${uid}`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={height}>
+            <stop offset={baseFrac} stopColor={UP} />
+            <stop offset={baseFrac} stopColor={DOWN} />
           </linearGradient>
           <clipPath id={`ca${uid}`}>
             <rect x={0} y={0} width={width} height={Math.max(0, g.sy(base))} />
@@ -221,7 +227,7 @@ export function EquityCurve({
             y={pad.t}
             width={Math.max(1, g.sx(shown[g.dd.b]!.t) - g.sx(shown[g.dd.a]!.t))}
             height={g.h}
-            fill="#86aec6"
+            fill={DOWN}
             opacity={0.06}
           >
             <title>{`Max drawdown ${usd(g.dd.abs)}`}</title>
@@ -249,7 +255,7 @@ export function EquityCurve({
               className={reduced ? undefined : "equity-path"}
               d={g.d}
               fill="none"
-              stroke={isUp ? "#ff563c" : "#86aec6"}
+              stroke={`url(#gs${uid})`}
               strokeWidth={compactAxes ? 1.5 : 2.25}
               strokeLinejoin="round"
               strokeLinecap="round"
@@ -261,14 +267,14 @@ export function EquityCurve({
                 y={g.sy(lastVal) - 4}
                 width={8}
                 height={8}
-                fill={isUp ? "#ff563c" : "#86aec6"}
+                fill={isUp ? UP : DOWN}
               >
                 {!reduced && <animate attributeName="opacity" values="1;0.35;1" dur="1.6s" repeatCount="indefinite" />}
               </rect>
             )}
           </>
         ) : shown.length === 1 ? (
-          <rect x={g.sx(shown[0]!.t) - 4} y={g.sy(val(shown[0]!)) - 4} width={8} height={8} fill="#ff563c" />
+          <rect x={g.sx(shown[0]!.t) - 4} y={g.sy(val(shown[0]!)) - 4} width={8} height={8} fill={val(shown[0]!) >= base ? UP : DOWN} />
         ) : (
           <>
             <line x1={pad.l} x2={width - pad.r} y1={g.sy(base)} y2={g.sy(base)} stroke="#605d5d" strokeWidth={2} />
@@ -282,7 +288,7 @@ export function EquityCurve({
         {hp && (
           <g pointerEvents="none">
             <line x1={g.sx(hp.t)} x2={g.sx(hp.t)} y1={pad.t} y2={height - pad.b} stroke="#ff9783" strokeWidth={1} strokeDasharray="2 3" />
-            <circle cx={g.sx(hp.t)} cy={g.sy(val(hp))} r={4} fill="#121010" stroke="#ff563c" strokeWidth={2} />
+            <circle cx={g.sx(hp.t)} cy={g.sy(val(hp))} r={4} fill="#121010" stroke={val(hp) >= base ? UP : DOWN} strokeWidth={2} />
           </g>
         )}
         <rect
