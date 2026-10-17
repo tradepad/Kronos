@@ -45,6 +45,20 @@ export interface BacktestOpts {
   strategies?: Strategy[];
   /** "historical" stamps runs with candle time (backfill); "wall" with now (worker). */
   clock?: "wall" | "historical";
+  /**
+   * Window slugs already scored. When given, the run tests only the newest
+   * `nWindows` windows NOT in this set, so a worker that ticks every few
+   * seconds never counts the same window twice.
+   */
+  skipSlugs?: ReadonlySet<string>;
+}
+
+/** Thrown when every window in range has already been scored: nothing new to test. */
+export class NoNewWindowsError extends Error {
+  constructor(marketId: string) {
+    super(`${marketId}: no new windows since the last run`);
+    this.name = "NoNewWindowsError";
+  }
 }
 
 export interface BacktestResult {
@@ -126,9 +140,20 @@ export async function runBacktest(opts: BacktestOpts): Promise<BacktestResult> {
   let lastTs: Date | null = null;
   const cost = cfg.roundTripCostBps;
 
-  for (let w = 0; w < nWindows; w++) {
-    const i = startIdx + w;
-    if (i + horizonSteps >= candles.length) break;
+  const windowSlug = (i: number) =>
+    slugForWindow(market, new Date(candles[i]!.timestamp.getTime() + Number(market.bybitInterval) * 60_000));
+  let indices: number[] = [];
+  if (opts.skipSlugs) {
+    for (let i = candles.length - 1 - horizonSteps; i >= startIdx && indices.length < nWindows; i--) {
+      if (!opts.skipSlugs.has(windowSlug(i))) indices.push(i);
+    }
+    indices.reverse();
+    if (indices.length === 0) throw new NoNewWindowsError(marketId);
+  } else {
+    for (let w = 0; w < nWindows && startIdx + w + horizonSteps < candles.length; w++) indices.push(startIdx + w);
+  }
+
+  for (const [w, i] of indices.entries()) {
     const history = candles.slice(Math.max(0, i + 1 - ctxLen), i + 1); // never includes the future
     const now = candles[i]!;
     const future = candles.slice(i + 1, i + 1 + horizonSteps);
@@ -138,7 +163,7 @@ export async function runBacktest(opts: BacktestOpts): Promise<BacktestResult> {
     lastTs = candles[i + horizonSteps]!.timestamp;
 
     const pred = await predictor.predict(history, cfg);
-    const slug = slugForWindow(market, new Date(now.timestamp.getTime() + Number(market.bybitInterval) * 60_000));
+    const slug = windowSlug(i);
     const odds = simulatedOdds(slug, rng);
     const indicators = computeIndicators(history, pred.direction, cfg);
     const decision = decideWithVolatility(pred, odds, cfg, bankroll, indicators, history);

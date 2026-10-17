@@ -8,10 +8,12 @@ import {
   getDb,
   insertBackfillRun,
   insertBacktestRun,
+  insertSamples,
   insertTrade,
   recentBackfillRuns,
   recentBacktestRuns,
   resolveTrade,
+  scoredSlugs,
   sanitizeRuntimeConfig,
   tradeStats,
   type RunInput,
@@ -100,5 +102,18 @@ describe("runtime config", () => {
     expect(sanitizeRuntimeConfig({ backtestSource: "backtest_runs; DROP TABLE x" }).backtestSource).toBe("worker");
     expect(sanitizeRuntimeConfig({ backtestSource: "backfill" }).backtestSource).toBe("backfill");
     expect(sanitizeRuntimeConfig({ minConfidence: 7 }).minConfidence).toBe(1);
+  });
+});
+
+describe("scored window slugs", () => {
+  it("are per market and per source", () => {
+    const base = { timestamp: "2026-01-01T00:00:00Z", predictorName: "heuristic", modelProb: 0.6, direction: "UP" as const };
+    insertSamples(db, [
+      { ...base, source: "backtest", marketId: "btc-updown-5m", slug: "btc-updown-5m-1" },
+      { ...base, source: "backtest", marketId: "btc-updown-5m", slug: "btc-updown-5m-1" },
+      { ...base, source: "backtest", marketId: "eth-updown-5m", slug: "eth-updown-5m-1" },
+      { ...base, source: "backfill", marketId: "btc-updown-5m", slug: "btc-updown-5m-2" },
+    ]);
+    expect([...scoredSlugs(db, "backtest", "btc-updown-5m")]).toEqual(["btc-updown-5m-1"]);
   });
 });

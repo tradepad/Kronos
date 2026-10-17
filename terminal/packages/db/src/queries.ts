@@ -370,6 +370,14 @@ export function resolvedSamples(
   }));
 }
 
+/** Slugs of windows already scored for one market and source (the worker's dedupe set). */
+export function scoredSlugs(db: DB, source: "live" | "backtest" | "backfill", marketId: string): Set<string> {
+  const rows = db
+    .prepare(`SELECT DISTINCT slug FROM prediction_samples WHERE source = ? AND market_id = ? AND slug IS NOT NULL`)
+    .all(source, marketId) as { slug: string }[];
+  return new Set(rows.map((r) => r.slug));
+}
+
 export function unresolvedLiveSamples(db: DB): { id: number; marketId: string; slug: string | null }[] {
   return (
     db
