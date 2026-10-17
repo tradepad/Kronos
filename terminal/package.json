@@ -1,0 +1,36 @@
+{
+  "name": "kronos-trader",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "bot": "pnpm --silent --filter @kronos/bot bot",
+    "backfill": "pnpm --silent --filter @kronos/bot backfill",
+    "backtest": "pnpm --silent --filter @kronos/bot backtest",
+    "lab": "pnpm --silent --filter @kronos/bot lab",
+    "web": "pnpm --filter @kronos/web dev",
+    "web:build": "pnpm --filter @kronos/web build",
+    "web:start": "pnpm --filter @kronos/web start",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:stats": "pnpm --silent --filter @kronos/bot stats"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

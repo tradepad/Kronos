@@ -1,0 +1,11 @@
+node_modules/
+.next/
+dist/
+data/*.sqlite*
+data/runtime-config.json
+data/*.tmp
+data/*.log
+services/kronos-sidecar/.venv/
+__pycache__/
+*.tsbuildinfo
+next-env.d.ts

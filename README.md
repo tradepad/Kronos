@@ -1,3 +1,5 @@
+> **Kronos Signal Desk** — this fork adds a Polymarket 5- and 15-minute research terminal (dashboard, paper-trading bot, backtester) in [`terminal/`](terminal/README.md). On Windows, double-click `terminal/START-WINDOWS.bat`.
+
 <div align="center">
   <h2><b>Kronos: A Foundation Model for the Language of Financial Markets </b></h2>
 </div>
