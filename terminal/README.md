@@ -62,7 +62,9 @@ curl -s -X POST http://localhost:3337/api/config -H 'content-type: application/j
 ```
 
 On a CPU each Kronos sample takes 1–3 s, so keep `--samples 3` and expect a 35-day backfill to take hours.
-An NVIDIA GPU or Apple Silicon is 10–20× faster.
+An NVIDIA GPU or Apple Silicon is 10–20× faster. On Windows, `bootstrap.ps1` installs the CUDA build of torch when it
+finds an NVIDIA card, and `START-WINDOWS.bat` then defaults to 12 samples. With 3 samples, P(up) can only be 0, 33, 67
+or 100%, so the model looks far surer than it is.
 
 ## How it fits together
 

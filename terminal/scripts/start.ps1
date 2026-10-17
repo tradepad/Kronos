@@ -7,11 +7,12 @@
     3. open three windows (model service, bot, dashboard) and your browser
 
   -Heuristic   skip the Kronos model and run the momentum baseline instead
-  -Samples N   Monte Carlo samples per forecast (default 3: fast on a CPU)
+  -Samples N   Monte Carlo samples per forecast (default 3 on a CPU, 12 with an NVIDIA GPU)
 
   PAPER TRADING ONLY. Nothing here can place a real order.
 #>
-param([switch]$Heuristic, [int]$Samples = 3)
+param([switch]$Heuristic, [int]$Samples = 0)
+if ($Samples -le 0) { $Samples = if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { 12 } else { 3 } }
 $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $Root

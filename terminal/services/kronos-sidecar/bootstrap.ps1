@@ -43,5 +43,18 @@ if (-not (Test-Path $VenvPy)) {
 Write-Host "[bootstrap] Installing Python dependencies (torch is large, this can take a few minutes)..."
 & $VenvPy -m pip install --quiet -r (Join-Path $SidecarDir "requirements.txt")
 if ($LASTEXITCODE -ne 0) { Write-Host "[bootstrap] pip install failed." -ForegroundColor Red; exit 1 }
+
+# PyPI's Windows torch wheel is CPU-only. With an NVIDIA card, swap in the CUDA build (~2.5 GB, 10-20x faster).
+if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
+  & $VenvPy -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "[bootstrap] NVIDIA GPU found. Installing the CUDA build of torch (about 2.5 GB)..."
+    & $VenvPy -m pip install --quiet --upgrade --force-reinstall --no-deps torch --index-url https://download.pytorch.org/whl/cu128
+    & $VenvPy -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"
+    if ($LASTEXITCODE -eq 0) { Write-Host "[bootstrap] torch now runs on the GPU." }
+    else { Write-Host "[bootstrap] CUDA torch did not load; falling back to the CPU build." -ForegroundColor Yellow
+      & $VenvPy -m pip install --quiet --force-reinstall --no-deps torch }
+  }
+}
 Write-Host ""
 Write-Host "[bootstrap] Done. Start the sidecar with:  .\run.ps1"
