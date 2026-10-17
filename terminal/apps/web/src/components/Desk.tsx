@@ -145,6 +145,11 @@ export function Desk() {
                   {usdSigned(range === "ALL" ? totalPnl : rangePnl, 2)}
                 </div>
                 <div className="hero-side">
+                  {/* The hero is the biggest number on screen, so say plainly what it is and point at the real one. */}
+                  <span className="sim-note">
+                    SIMULATED BACKTEST · NOT MONEY · REAL-PRICE PAPER{" "}
+                    <span className={signClass(paper?.realizedPnl)}>{usdSigned(paper?.realizedPnl ?? 0)}</span>
+                  </span>
                   <span className={signClass(bt?.roi ?? 0)}>
                     {(bt?.roi ?? 0) >= 0 ? "▲" : "▼"} {pct(bt?.roi ?? null, 1)} ROI ON {usd(bt?.totalWagered ?? 0, 0)}
                   </span>

@@ -226,6 +226,7 @@ button { font: inherit; color: inherit; }
 .hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4) var(--space-6); padding: var(--space-6) var(--space-6) var(--space-2); }
 .hero-num { font-family: var(--font-heading); font-weight: 800; font-size: clamp(44px, 4.6vw, 76px); line-height: 0.9; white-space: nowrap; letter-spacing: 0.01em; }
 .hero-num.up { text-shadow: 0 0 32px color-mix(in srgb, var(--up) 35%, transparent); }
+.sim-note { color: #f0c05a; font-weight: 700; letter-spacing: 0.08em; }
 .hero-num.down { text-shadow: 0 0 32px color-mix(in srgb, var(--color-accent) 40%, transparent); }
 .hero-side { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; white-space: nowrap; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
