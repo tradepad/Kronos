@@ -44,16 +44,21 @@ Write-Host "[bootstrap] Installing Python dependencies (torch is large, this can
 & $VenvPy -m pip install --quiet -r (Join-Path $SidecarDir "requirements.txt")
 if ($LASTEXITCODE -ne 0) { Write-Host "[bootstrap] pip install failed." -ForegroundColor Red; exit 1 }
 
-# PyPI's Windows torch wheel is CPU-only. With an NVIDIA card, swap in the CUDA build (~2.5 GB, 10-20x faster).
-if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
-  & $VenvPy -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"
-  if ($LASTEXITCODE -ne 0) {
-    Write-Host "[bootstrap] NVIDIA GPU found. Installing the CUDA build of torch (about 2.5 GB)..."
-    & $VenvPy -m pip install --quiet --upgrade --force-reinstall --no-deps torch --index-url https://download.pytorch.org/whl/cu128
-    & $VenvPy -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"
-    if ($LASTEXITCODE -eq 0) { Write-Host "[bootstrap] torch now runs on the GPU." }
-    else { Write-Host "[bootstrap] CUDA torch did not load; falling back to the CPU build." -ForegroundColor Yellow
-      & $VenvPy -m pip install --quiet --force-reinstall --no-deps torch }
+# pip's default torch wheel on Windows is CPU-only. With an NVIDIA card, swap
+# in the CUDA build of the same torch version (newest CUDA index first).
+# Set KRONOS_CPU_ONLY=1 to skip.
+if (-not $env:KRONOS_CPU_ONLY -and (Get-Command nvidia-smi -ErrorAction SilentlyContinue)) {
+  $hasCuda = (& $VenvPy -c "import torch; print(torch.cuda.is_available())").Trim()
+  if ($hasCuda -ne "True") {
+    $torchVer = (& $VenvPy -c "import torch; print(torch.__version__.split('+')[0])").Trim()
+    foreach ($cu in @("cu130", "cu128", "cu126")) {
+      Write-Host "[bootstrap] NVIDIA GPU found. Installing torch $torchVer+$cu (about 2.5 GB)..."
+      & $VenvPy -m pip install --quiet --force-reinstall --no-deps "torch==$torchVer+$cu" --index-url "https://download.pytorch.org/whl/$cu"
+      if ($LASTEXITCODE -eq 0) { break }
+    }
+    $hasCuda = (& $VenvPy -c "import torch; print(torch.cuda.is_available())").Trim()
+    if ($hasCuda -eq "True") { Write-Host "[bootstrap] CUDA torch ready: Kronos will run on the GPU." -ForegroundColor Green }
+    else { Write-Host "[bootstrap] Could not enable the GPU; Kronos will run on the CPU (slower, still works)." -ForegroundColor Yellow }
   }
 }
 Write-Host ""
