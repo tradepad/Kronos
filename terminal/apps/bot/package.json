@@ -1,0 +1,19 @@
+{
+  "name": "@kronos/bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bot": "tsx src/cli/bot.ts",
+    "backtest": "tsx src/cli/backtest.ts",
+    "backfill": "tsx src/cli/backfill.ts",
+    "lab": "tsx src/cli/lab.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "stats": "tsx src/cli/stats.ts"
+  },
+  "dependencies": {
+    "@kronos/core": "workspace:*",
+    "@kronos/db": "workspace:*"
+  }
+}
